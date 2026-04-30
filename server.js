@@ -5,12 +5,12 @@ const app = express();
 app.use(express.json());
 
 app.post('/api/clientes', async (req, res) => {
-    const { nombre, apellido, dni } = req.body;
+    const { nombre, apellido, dni, password_hash } = req.body;
 
     try {
     const result = await pool.query(
-        'INSERT INTO clientes (nombre, apellido, dni) VALUES ($1, $2, $3) RETURNING *',
-        [nombre, apellido, dni]
+        'INSERT INTO clientes (nombre, apellido, dni, password_hash) VALUES ($1, $2, $3, $4) RETURNING *',
+        [nombre, apellido, dni, password_hash]
     );
 
     res.json(result.rows[0]);
@@ -133,6 +133,82 @@ app.get('/api/reservas', async (req, res) => {
 
     } catch (error) {
     res.status(500).json({ error: error.message });
+    }
+});
+
+// Obtener una reserva específica por ID
+app.get('/api/reservas/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM reservas WHERE id_reserva = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Reserva no encontrada' });
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Actualizar el estado de una reserva (ej: confirmada, cancelada)
+app.put('/api/reservas/:id', async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE reservas SET estado = $1 WHERE id_reserva = $2 RETURNING *',
+            [estado, id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Eliminar una reserva
+app.delete('/api/reservas/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('DELETE FROM reservas WHERE id_reserva = $1 RETURNING *', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Reserva no encontrada' });
+        res.json({ mensaje: 'Reserva eliminada', reserva: result.rows });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Obtener todas las habitaciones
+app.get('/api/habitaciones', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM habitaciones');
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Obtener una habitación por ID
+app.get('/api/habitaciones/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM habitaciones WHERE id_habitacion = $1', [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Habitación no encontrada' });
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Actualizar una habitación
+app.put('/api/habitaciones/:id', async (req, res) => {
+    const { id } = req.params;
+    const { numero, tipo, precio_noche, estado } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE habitaciones SET numero = $1, tipo = $2, precio_noche = $3, estado = $4 WHERE id_habitacion = $5 RETURNING *',
+            [numero, tipo, precio_noche, estado, id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
