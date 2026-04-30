@@ -1,0 +1,141 @@
+const express = require('express');
+const pool = require('./db');
+
+const app = express();
+app.use(express.json());
+
+app.post('/api/clientes', async (req, res) => {
+    const { nombre, apellido, dni } = req.body;
+
+    try {
+    const result = await pool.query(
+        'INSERT INTO clientes (nombre, apellido, dni) VALUES ($1, $2, $3) RETURNING *',
+        [nombre, apellido, dni]
+    );
+
+    res.json(result.rows[0]);
+
+    } catch (error) {
+    if (error.code === '23505') {
+    return res.status(400).json({ error: 'El DNI ya existe' });
+    }
+    res.status(500).json({ error: 'Error del servidor' });
+}
+});
+
+app.get('/api/clientes', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM clientes');
+        res.json(result.rows);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/clientes/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+    const result = await pool.query(
+        'SELECT * FROM clientes WHERE id_cliente = $1',
+        [id]
+    );
+
+    res.json(result.rows[0]);
+
+    } catch (error) {
+    res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/clientes/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, apellido, dni } = req.body;
+
+    try {
+    const result = await pool.query(
+      'UPDATE clientes SET nombre = $1, apellido = $2, dni = $3 WHERE id_cliente = $4 RETURNING *',
+        [nombre, apellido, dni, id]
+    );
+
+    res.json(result.rows[0]);
+
+    } catch (error) {
+    res.status(400).json({ error: error.message });
+    }
+});
+
+app.delete('/api/clientes/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+    const result = await pool.query(
+        'DELETE FROM clientes WHERE id_cliente = $1 RETURNING *',
+        [id]
+    );
+
+    if (result.rows.length === 0) {
+        return res.status(404).json({ mensaje: 'Cliente no encontrado' });
+    }
+
+    res.json({ mensaje: 'Cliente eliminado', cliente: result.rows[0] });
+
+    } catch (error) {
+    res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/api/reservas', async (req, res) => {
+    const { id_cliente, id_habitacion, fecha_inicio, fecha_fin } = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        await client.query(
+            'SELECT crear_reserva($1, $2, $3, $4)',
+            [id_cliente, id_habitacion, fecha_inicio, fecha_fin]
+        );
+
+        await client.query('COMMIT');
+
+        res.json({ mensaje: 'Reserva creada correctamente' });
+
+    } catch (error) {
+    await client.query('ROLLBACK');
+    res.status(400).json({ error: error.message });
+
+    } finally {
+    client.release();
+    }
+});
+
+app.get('/api/reservas', async (req, res) => {
+    try {
+    const result = await pool.query(`
+        SELECT 
+            r.id_reserva,
+            r.fecha_inicio,
+            r.fecha_fin,
+            r.estado,
+            c.nombre,
+            c.apellido,
+            h.tipo,
+            h.estado AS estado_habitacion
+        FROM reservas r
+        JOIN clientes c ON r.id_cliente = c.id_cliente
+        JOIN habitaciones h ON r.id_habitacion = h.id_habitacion
+    `);
+
+    res.json(result.rows);
+
+    } catch (error) {
+    res.status(500).json({ error: error.message });
+    }
+});
+
+app.listen(3000, () => {
+    console.log('Servidor corriendo en puerto 3000');
+});
