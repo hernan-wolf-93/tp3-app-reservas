@@ -109,20 +109,29 @@ async function cargarDatosProtegidos() {
             // Limpiamos el texto de "Cargando..."
             listaDatos.innerHTML = ''; 
 
-            // Recorremos los datos y creamos un parrafito por cada uno
-            // (Ajustá "item.numero" o "item.tipo" según los nombres de columnas en tu BD)
-            data.forEach(item => {
-        const div = document.createElement('div');
-    // Ahora sí leemos los nombres exactos que nos manda tu base de datos
+        data.forEach(item => {
+            const div = document.createElement('div');
+    
+        // Armamos una variable para el botón dependiendo del estado
+            let botonAccion = '';
+        if (item.estado === 'confirmada') {
+            botonAccion = `<button onclick="cancelarReserva(${item.id_reserva})" style="margin-top: 10px; color: red; cursor: pointer;">Cancelar Reserva</button>`;
+        } else {
+            botonAccion = `<button disabled style="margin-top: 10px; color: gray; cursor: not-allowed;">Reserva ${item.estado}</button>`;
+        }
+
         div.innerHTML = `
-        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-            <strong>Reserva #${item.id_reserva}</strong><br>
-            Cliente: ${item.nombre} ${item.apellido}<br>
-            Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
-            Fechas: ${item.fecha_inicio.split('T')[0]} al ${item.fecha_fin.split('T')[0]}<br>
-            Estado de reserva: ${item.estado}
-        </div>
-    `;
+            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+                <strong>Reserva #${item.id_reserva}</strong><br>
+                Cliente: ${item.nombre} ${item.apellido}<br>
+                Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
+                Fechas: ${item.fecha_inicio.split('T')[0]} al ${item.fecha_fin.split('T')[0]}<br>
+                Estado de reserva: <strong>${item.estado}</strong><br>
+            
+                <!-- Inyectamos el botón que armamos arriba -->
+                ${botonAccion}
+            </div>
+        `;
     listaDatos.appendChild(div);
 });
         } else {
@@ -169,4 +178,25 @@ if (formReserva) {
             console.error('Error:', error);
         }
     });
+}
+
+async function cancelarReserva(id_reserva) {
+    const token = localStorage.getItem('token');
+    
+    // Hacemos una petición PUT a tu endpoint de actualización
+    const response = await fetch(`/api/reservas/${id_reserva}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ estado: 'cancelada' }) // Le pasamos el nuevo estado
+    });
+
+    if (response.ok) {
+        alert('Reserva cancelada.');
+        cargarDatosProtegidos(); // Volvemos a cargar la lista para ver los cambios
+    } else {
+        alert('Hubo un error al cancelar.');
+    }
 }

@@ -2,18 +2,23 @@ const pool = require('../db');
 
 // Función para GET /api/reservas
 const obtenerReservas = async (req, res) => {
+    // 1. Capturamos quién es el usuario logueado desde su Token JWT
+    const id_cliente_logueado = req.user.id_cliente;
+
     try {
-        const result = await pool.query(`
-            SELECT 
-                r.id_reserva, r.fecha_inicio, r.fecha_fin, r.estado,
-                c.nombre, c.apellido, h.tipo, h.estado AS estado_habitacion
+        // 2. Usamos ese ID en el bloque WHERE para que solo traiga SUS reservas
+        const result = await pool.query(
+            `SELECT r.id_reserva, r.fecha_inicio, r.fecha_fin, r.estado, 
+                c.nombre, c.apellido, h.tipo, h.estado AS estado_habitacion 
             FROM reservas r
             JOIN clientes c ON r.id_cliente = c.id_cliente
             JOIN habitaciones h ON r.id_habitacion = h.id_habitacion
-        `);
+            WHERE r.id_cliente = $1`, // <-- ESTA ES LA REGLA DE SEGURIDAD
+            [id_cliente_logueado]
+        );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Error al obtener las reservas' });
     }
 };
 
