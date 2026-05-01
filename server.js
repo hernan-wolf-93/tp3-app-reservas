@@ -5,6 +5,7 @@ const app = express();
 
 // Middleware para que Express pueda leer los JSON que enviamos por el body
 app.use(express.json()); 
+app.use(express.static('public'));
 
 // 1. IMPORTAMOS TODAS TUS RUTAS DESDE LA CARPETA 'routes'
 const authRoutes = require('./routes/auth');

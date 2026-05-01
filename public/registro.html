@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>Hotel - Login</title>
+    <title>Hotel - Registro</title>
 </head>
 <body>
     <h1>Hotel La Bombonera</h1>
     <div id="form">
-        <form id="form-login">
+        <form id="form-register">
+            <input name="nombre" id="nombre" class="form-control" type="text" placeholder="Ingrese nombre" required>
+            <input name="apellido" id="apellido" class="form-control" type="text" placeholder="Ingrese apellido" required>
             <input name="dni" id="dni" class="form-control" type="text" placeholder="Ingrese DNI" required>
             <input name="password" id="password" class="pass-form-control" type="password" placeholder="Ingrese contraseña" required>
-            <button type="submit">Iniciar sesión</button>
+            <button type="submit">Registrarse</button>
         </form>
-    </div>
-
-    <div id="register-link">
-        <!-- Cambiamos el link para que vaya a tu futuro archivo HTML de registro -->
-        <a href="registro.html">Si no tienes cuenta, pulsar aquí para registrarse</a>
     </div>
 
     <script src="app.js"></script>

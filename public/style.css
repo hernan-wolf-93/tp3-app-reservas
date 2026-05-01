@@ -1,0 +1,70 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    /* Mudamos el Flexbox al body para que centre ABSOLUTAMENTE TODO en la pantalla */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Toma el 100% del alto de la pantalla */
+    background-color: blue;
+}
+
+#form {
+    border: solid black 1px;
+    background-color: yellow;
+    /* Agregamos un poco de padding (espacio interior) para que no quede pegado a los bordes */
+    padding: 30px; 
+    border-radius: 8px; /* Un toque estético para redondear bordes */
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Separa los inputs del botón sin usar margin */
+}
+
+#form-login {
+    border: solid black 1px;
+    background-color: yellow;
+    padding: 30px; 
+    border-radius: 8px; 
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; 
+}
+
+#form-register {
+    border: solid black 1px;
+    background-color: yellow;
+    padding: 30px; 
+    border-radius: 8px; 
+    
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px; 
+}
+
+h1 {
+    font-size: 2em;
+    /* Cambiamos capitalize por uppercase para que todo quede en mayúsculas */
+    text-transform: uppercase; 
+    margin-bottom: 20px;
+}
+
+#register-link {
+    margin-top: 20px;
+}
+
+/* 2. Atacamos directamente al enlace (la etiqueta a) para cambiar su texto */
+#register-link a {
+    text-decoration: none; /* Quita el subrayado */
+    background-color: white;
+    color: black; /* Cambia el color de las letras */
+}
