@@ -34,7 +34,7 @@ CREATE TABLE pagos (
 
 
 --CREACION de procedimiento almacenado
-CREATE OR REPLACE FUNCTION crear_reserva(
+ CREATE OR REPLACE FUNCTION crear_reserva(
     p_id_cliente INT,
     p_id_habitacion INT,
     p_fecha_inicio DATE,
@@ -89,7 +89,7 @@ CREATE OR REPLACE FUNCTION actualizar_estado_habitacion()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.estado IN ('cancelada', 'finalizada') 
-    AND OLD.estado != NEW.estado THEN
+       AND OLD.estado != NEW.estado THEN
 
         UPDATE habitaciones
         SET estado = 'disponible'
@@ -113,7 +113,7 @@ INSERT INTO clientes (nombre, apellido, dni, password_hash)
 VALUES ('Juan', 'Perez', '12345678', 'techo');
 
 INSERT INTO clientes (nombre, apellido, dni, password_hash)
-VALUES ('Hernan', 'Lobo', '38901387', 'casa');
+VALUES ('Hernan', 'Lobo', '37501386', 'casa');
 
 INSERT INTO clientes (nombre, apellido, dni, password_hash)
 VALUES ('Agustina', 'Andrada', '87654321', 'perro');
@@ -139,3 +139,21 @@ UPDATE reservas
 SET estado = 'cancelada'
 WHERE id_reserva = 1;
 
+SELECT * FROM habitaciones;
+
+TRUNCATE TABLE habitaciones RESTART IDENTITY CASCADE;
+
+SELECT * 
+FROM clientes
+
+SELECT nombre, apellido, dni 
+FROM clientes 
+WHERE id_cliente = 1
+
+SELECT * 
+FROM reservas
+
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+SELECT dni, password_hash FROM clientes;
