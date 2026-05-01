@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Panel de Reservas</title>
+</head>
+<body>
+    <!-- Barra superior -->
+    <header class="panel-header">
+        <h1>Panel de Reservas</h1>
+        <button id="btn-logout">Cerrar Sesión</button>
+    </header>
+
+    <!-- Contenedor principal -->
+    <main class="panel-container">
+        
+        <!-- MITAD IZQUIERDA: Formulario para crear reserva -->
+        <section class="form-section">
+            <h2>Nueva Reserva</h2>
+            <form id="form-reserva">
+                <label>Tipo de Habitación:</label>
+                <select id="id_habitacion" required>
+                    <option value="" disabled selected>Elegí una habitación...</option>
+                    <option value="1">Habitación Simple</option>
+                    <option value="2">Habitación Doble</option>
+                    <option value="3">Habitación Matrimonial</option>
+                </select>
+                <label>Fecha de Ingreso:</label>
+                <input type="date" id="fecha_inicio" required>
+                <label>Fecha de Salida:</label>
+                <input type="date" id="fecha_fin" required>
+                <button type="submit">Reservar</button>
+            </form>
+        </section>
+
+        <!-- MITAD DERECHA: Listado protegido que viene de la BD -->
+        <section class="list-section">
+            <h2>Lista de Reservas</h2>
+            <div id="lista-datos">
+                <!-- Aquí aparecerán los datos inyectados por Javascript -->
+                <p>Cargando datos...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

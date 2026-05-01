@@ -66,3 +66,107 @@ if (formRegister) {
         }
     });
 }
+
+// ==========================================
+// LÓGICA DEL PANEL DE RESERVAS
+// ==========================================
+
+// 1. CERRAR SESIÓN
+const btnLogout = document.getElementById('btn-logout');
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        localStorage.removeItem('token'); // Borramos la llave
+        window.location.href = 'index.html'; // Lo pateamos al login
+    });
+}
+
+// 2. OBTENER Y MOSTRAR DATOS (Requiere Token)
+async function cargarDatosProtegidos() {
+    const listaDatos = document.getElementById('lista-datos');
+    
+    // Si no estamos en la página de reservas, no ejecutamos esto
+    if (!listaDatos) return; 
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        alert('Acceso denegado. Por favor, inicia sesión.');
+        window.location.href = 'index.html';
+        return;
+    }
+
+    try {
+        // Hacemos el GET enviando el token en el header (Requisito clave del TP)
+        const response = await fetch('/api/reservas', { // <-- TIENE QUE DECIR /api/reservas
+        method: 'GET',
+        headers: {
+        'Authorization': `Bearer ${token}`
+    }
+});
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Limpiamos el texto de "Cargando..."
+            listaDatos.innerHTML = ''; 
+
+            // Recorremos los datos y creamos un parrafito por cada uno
+            // (Ajustá "item.numero" o "item.tipo" según los nombres de columnas en tu BD)
+            data.forEach(item => {
+        const div = document.createElement('div');
+    // Ahora sí leemos los nombres exactos que nos manda tu base de datos
+        div.innerHTML = `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <strong>Reserva #${item.id_reserva}</strong><br>
+            Cliente: ${item.nombre} ${item.apellido}<br>
+            Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
+            Fechas: ${item.fecha_inicio.split('T')[0]} al ${item.fecha_fin.split('T')[0]}<br>
+            Estado de reserva: ${item.estado}
+        </div>
+    `;
+    listaDatos.appendChild(div);
+});
+        } else {
+            listaDatos.innerHTML = `<p>Error al cargar datos: ${data.error}</p>`;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Ejecutamos la función de cargar datos ni bien carga el script
+cargarDatosProtegidos();
+
+// 3. CREAR NUEVA RESERVA (Requiere Token)
+const formReserva = document.getElementById('form-reserva');
+if (formReserva) {
+    formReserva.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const token = localStorage.getItem('token');
+        const id_habitacion = document.getElementById('id_habitacion').value;
+        const fecha_inicio = document.getElementById('fecha_inicio').value;
+        const fecha_fin = document.getElementById('fecha_fin').value;
+
+        try {
+            const response = await fetch('/api/reservas', { // ⚠️ Cambiá por tu ruta POST real
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Mandamos el token para que nos deje crear
+                },
+                body: JSON.stringify({ id_habitacion, fecha_inicio, fecha_fin })
+            });
+
+            if (response.ok) {
+                alert('¡Reserva creada con éxito!');
+                formReserva.reset(); // Limpiamos el formulario
+                cargarDatosProtegidos(); // Volvemos a cargar la lista para ver el cambio
+            } else {
+                const errorData = await response.json();
+                alert('Error al reservar: ' + errorData.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+}

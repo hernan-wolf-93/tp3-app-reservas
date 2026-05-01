@@ -31,7 +31,11 @@ const obtenerReservaPorId = async (req, res) => {
 
 // Función para POST /api/reservas (¡Tu excelente método con Transacción y Procedimiento!)
 const crearReserva = async (req, res) => {
-    const { id_cliente, id_habitacion, fecha_inicio, fecha_fin } = req.body;
+    const { id_habitacion, fecha_inicio, fecha_fin } = req.body;
+
+    // 2. Lo capturamos directamente del token de seguridad
+    const id_cliente = req.user.id_cliente; // Asumiendo que tu middleware de autenticación pone el ID del cliente en req.usuario.id
+    
     const client = await pool.connect();
 
     try {

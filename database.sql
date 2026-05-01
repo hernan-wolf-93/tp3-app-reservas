@@ -3,7 +3,7 @@ CREATE TABLE clientes (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     dni VARCHAR(20) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL, 
+    password_hash VARCHAR(255) NOT NULL 
 );
 
 CREATE TABLE habitaciones (
