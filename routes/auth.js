@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 // --- RUTAS DE AUTENTICACIÓN ---
 
 // Endpoint de Registro de Usuario
-router.post('/api/auth/register', async (req, res) => {
+router.post('/register', async (req, res) => {
     const { nombre, apellido, dni, password } = req.body; 
     
     try {
@@ -34,7 +34,7 @@ router.post('/api/auth/register', async (req, res) => {
 });
 
 // Endpoint de Login de Usuario
-router.post('/api/auth/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     const { dni, password } = req.body;
 
     console.log('DNI recibido:', dni);
