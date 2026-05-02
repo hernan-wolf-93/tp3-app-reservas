@@ -1,12 +1,20 @@
-const pool = require('../db');
+const pool = require('../db'); // Importamos el pool de conexiones a la base de datos PostgreSQL
 
-// Función para GET /api/reservas
+// ============================================================
+// CONTROLADORES DE RESERVAS
+// Cada función maneja una ruta específica de la API REST.
+// El objeto 'req' contiene los datos de la solicitud entrante,
+// y 'res' se usa para enviar la respuesta al cliente.
+// ============================================================
+
+// GET /api/reservas — Devuelve SOLO las reservas del usuario autenticado
 const obtenerReservas = async (req, res) => {
-    // 1. Capturamos quién es el usuario logueado desde su Token JWT
+    // El middleware JWT ya validó el token y dejó los datos del usuario en req.user
     const id_cliente_logueado = req.user.id_cliente;
 
     try {
-        // 2. Usamos ese ID en el bloque WHERE para que solo traiga SUS reservas
+        // JOIN entre reservas, clientes y habitaciones para traer info completa
+        // El WHERE filtra por el ID extraído del token: cada cliente solo ve sus reservas
         const result = await pool.query(
             `SELECT r.id_reserva, r.fecha_inicio, r.fecha_fin, r.estado, 
                 c.nombre, c.apellido, h.tipo, h.estado AS estado_habitacion 
@@ -14,60 +22,63 @@ const obtenerReservas = async (req, res) => {
             JOIN clientes c ON r.id_cliente = c.id_cliente
             JOIN habitaciones h ON r.id_habitacion = h.id_habitacion 
             WHERE r.id_cliente = $1
-            ORDER BY r.id_reserva DESC`, // <-- ESTA ES LA REGLA DE SEGURIDAD
-            [id_cliente_logueado]
+            ORDER BY r.id_reserva DESC`,
+            [id_cliente_logueado] // $1 se reemplaza por este valor (evita SQL Injection)
         );
-        res.json(result.rows);
+        res.json(result.rows); // Enviamos el array de resultados como JSON
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener las reservas' });
     }
 };
 
-// Función para GET /api/reservas/:id
+// GET /api/reservas/:id — Devuelve una reserva específica por su ID
 const obtenerReservaPorId = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // Extraemos el parámetro :id de la URL
     try {
         const result = await pool.query('SELECT * FROM reservas WHERE id_reserva = $1', [id]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Reserva no encontrada' });
-        res.json(result.rows); // Modifiqué esto levemente para que devuelva el objeto y no una lista
+        res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-// Función para POST /api/reservas (¡Tu excelente método con Transacción y Procedimiento!)
+// POST /api/reservas — Crea una nueva reserva usando una transacción y un procedimiento almacenado
 const crearReserva = async (req, res) => {
-    const { id_habitacion, fecha_inicio, fecha_fin } = req.body;
+    const { id_habitacion, fecha_inicio, fecha_fin } = req.body; // Datos enviados en el cuerpo del POST
+    const id_cliente = req.user.id_cliente; // El ID del cliente se toma del token, no del body (seguridad)
 
-    // 2. Lo capturamos directamente del token de seguridad
-    const id_cliente = req.user.id_cliente; // Asumiendo que tu middleware de autenticación pone el ID del cliente en req.usuario.id
-    
+    // Obtenemos una conexión dedicada del pool para manejar la transacción manualmente
     const client = await pool.connect();
 
     try {
-        await client.query('BEGIN');
+        await client.query('BEGIN'); // Iniciamos la transacción
+
+        // Llamamos al procedimiento almacenado en PostgreSQL que contiene la lógica de negocio
+        // (validaciones, inserción, cambio de estado de habitación, etc.)
         await client.query(
             'SELECT crear_reserva($1, $2, $3, $4)',
             [id_cliente, id_habitacion, fecha_inicio, fecha_fin]
         );
-        await client.query('COMMIT');
+
+        await client.query('COMMIT'); // Si todo salió bien, confirmamos los cambios en la BD
         res.json({ mensaje: 'Reserva creada correctamente' });
     } catch (error) {
-        await client.query('ROLLBACK');
+        await client.query('ROLLBACK'); // Si algo falla, revertimos TODO (ningún cambio queda a medias)
         res.status(400).json({ error: error.message });
     } finally {
-        client.release();
+        client.release(); // Siempre liberamos la conexión de vuelta al pool, haya error o no
     }
 };
 
-// --- MÁS MÉTODOS DE RESERVAS ---
+// PUT /api/reservas/:id — Actualiza el estado de una reserva (ej: 'pendiente' -> 'confirmada')
 const actualizarReserva = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;
     try {
         const result = await pool.query(
             'UPDATE reservas SET estado = $1 WHERE id_reserva = $2 RETURNING *',
-            [estado, id]
+            [estado, id] // RETURNING * devuelve la fila modificada sin necesidad de otro SELECT
         );
         res.json(result.rows);
     } catch (error) {
@@ -75,6 +86,7 @@ const actualizarReserva = async (req, res) => {
     }
 };
 
+// DELETE /api/reservas/:id — Elimina una reserva por ID
 const eliminarReserva = async (req, res) => {
     const { id } = req.params;
     try {
@@ -86,7 +98,11 @@ const eliminarReserva = async (req, res) => {
     }
 };
 
-// --- MÉTODOS DE HABITACIONES ---
+// ============================================================
+// CONTROLADORES DE HABITACIONES
+// ============================================================
+
+// GET /api/habitaciones — Devuelve todas las habitaciones
 const obtenerHabitaciones = async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM habitaciones');
@@ -96,6 +112,7 @@ const obtenerHabitaciones = async (req, res) => {
     }
 };
 
+// GET /api/habitaciones/:id
 const obtenerHabitacionPorId = async (req, res) => {
     const { id } = req.params;
     try {
@@ -107,9 +124,10 @@ const obtenerHabitacionPorId = async (req, res) => {
     }
 };
 
+// PUT /api/habitaciones/:id — Actualiza todos los campos de una habitación
 const actualizarHabitacion = async (req, res) => {
     const { id } = req.params;
-    const { numero, tipo, precio_noche, estado } = req.body;
+    const { numero, tipo, precio_noche, estado } = req.body; // Desestructuramos los campos del body
     try {
         const result = await pool.query(
             'UPDATE habitaciones SET numero = $1, tipo = $2, precio_noche = $3, estado = $4 WHERE id_habitacion = $5 RETURNING *',
@@ -121,9 +139,14 @@ const actualizarHabitacion = async (req, res) => {
     }
 };
 
-// --- MÉTODOS DE CLIENTES ---
+// ============================================================
+// CONTROLADORES DE CLIENTES
+// ============================================================
+
+// GET /api/clientes — Devuelve solo los campos no sensibles (sin contraseña)
 const obtenerClientes = async (req, res) => {
     try {
+        // Seleccionamos columnas específicas para no exponer datos sensibles como la contraseña
         const result = await pool.query('SELECT id_cliente, nombre, apellido, dni FROM clientes');
         res.json(result.rows);
     } catch (error) {
@@ -131,6 +154,7 @@ const obtenerClientes = async (req, res) => {
     }
 };
 
+// GET /api/clientes/:id
 const obtenerClientePorId = async (req, res) => {
     const { id } = req.params;
     try {
@@ -141,6 +165,7 @@ const obtenerClientePorId = async (req, res) => {
     }
 };
 
+// PUT /api/clientes/:id — Actualiza los datos personales de un cliente
 const actualizarCliente = async (req, res) => {
     const { id } = req.params;
     const { nombre, apellido, dni } = req.body;
@@ -151,10 +176,11 @@ const actualizarCliente = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: error.message }); // 400: error de datos del cliente
     }
 };
 
+// DELETE /api/clientes/:id
 const eliminarCliente = async (req, res) => {
     const { id } = req.params;
     try {
@@ -168,7 +194,11 @@ const eliminarCliente = async (req, res) => {
     }
 };
 
-// --- MÉTODOS DE PAGOS ---
+// ============================================================
+// CONTROLADORES DE PAGOS
+// ============================================================
+
+// GET /api/pagos
 const obtenerPagos = async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM pagos');
@@ -178,6 +208,7 @@ const obtenerPagos = async (req, res) => {
     }
 };
 
+// GET /api/pagos/:id
 const obtenerPagoPorId = async (req, res) => {
     const { id } = req.params;
     try {
@@ -189,6 +220,7 @@ const obtenerPagoPorId = async (req, res) => {
     }
 };
 
+// POST /api/pagos — Registra un nuevo pago vinculado a una reserva y habitación
 const crearPago = async (req, res) => {
     const { id_reserva, id_habitacion, tipo, monto, fecha } = req.body;
     try {
@@ -202,9 +234,10 @@ const crearPago = async (req, res) => {
     }
 };
 
+// PUT /api/pagos/:id — Actualiza el estado de un pago (ej: 'pendiente' -> 'completado')
 const actualizarPago = async (req, res) => {
     const { id } = req.params;
-    const { estado } = req.body; // Por ejemplo, para cambiar de 'pendiente' a 'completado'
+    const { estado } = req.body;
     try {
         const result = await pool.query(
             'UPDATE pagos SET estado = $1 WHERE id_pago = $2 RETURNING *',
@@ -216,6 +249,7 @@ const actualizarPago = async (req, res) => {
     }
 };
 
+// DELETE /api/pagos/:id
 const eliminarPago = async (req, res) => {
     const { id } = req.params;
     try {
@@ -227,8 +261,5 @@ const eliminarPago = async (req, res) => {
     }
 };
 
-
-// Exportamos tus funciones
+// Exportamos todas las funciones para que el archivo de rutas pueda usarlas
 module.exports = { obtenerReservas, obtenerReservaPorId, crearReserva, actualizarReserva, eliminarReserva, obtenerHabitaciones, obtenerHabitacionPorId, actualizarHabitacion, obtenerClientes, obtenerClientePorId, actualizarCliente, eliminarCliente, obtenerPagos, obtenerPagoPorId, crearPago, actualizarPago, eliminarPago };
-
-

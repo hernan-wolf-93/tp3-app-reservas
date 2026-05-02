@@ -1,53 +1,63 @@
 require('dotenv').config(); // Carga las variables de entorno desde el archivo .env
 const express = require('express');
-const router = express.Router();
+const router = express.Router(); // Router independiente: sus rutas se montan bajo un prefijo en app.js
 const pool = require('../db');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs'); // Librería para hashear y comparar contraseñas de forma segura
+const jwt = require('jsonwebtoken'); // Librería para generar y verificar tokens JWT
 
 // --- RUTAS DE AUTENTICACIÓN ---
 
-// Endpoint de Registro de Usuario
+// POST /api/auth/register — Registra un nuevo cliente en el sistema
 router.post('/register', async (req, res) => {
     const { nombre, apellido, dni, password } = req.body; 
     
     try {
-        // 1. Hashear (encriptar) la contraseña usando bcryptjs
+        // El salt es un valor aleatorio que se mezcla con la contraseña antes de hashear.
+        // El número 10 es el "costo": cuántas rondas de encriptación se aplican.
+        // Más alto = más seguro pero más lento. 10 es el estándar recomendado.
         const salt = await bcrypt.genSalt(10);
+
+        // hash() combina la contraseña en texto plano con el salt y genera el hash final.
+        // Este hash es lo que se guarda en la BD: la contraseña original NUNCA se almacena.
         const password_hash = await bcrypt.hash(password, salt);
 
-        // 2. Guardar el cliente en la base de datos con la contraseña encriptada
+        // RETURNING omite password_hash para no devolverlo en la respuesta
         const result = await pool.query(
             'INSERT INTO clientes (nombre, apellido, dni, password_hash) VALUES ($1, $2, $3, $4) RETURNING id_cliente, nombre, apellido, dni',
             [nombre, apellido, dni, password_hash]
         );
 
-        // Respondemos sin devolver el password_hash por seguridad
-        res.status(201).json({ 
+        res.status(201).json({ // 201 Created: indica que se creó un recurso nuevo
             mensaje: 'Cliente registrado con éxito', 
             cliente: result.rows 
         });
     } catch (error) {
-        // Si el DNI ya existe, PostgreSQL tirará un error que capturamos aquí
+        // PostgreSQL lanza un error si el DNI ya existe (restricción UNIQUE en la tabla).
+        // Ese mensaje llega al cliente para informar el conflicto.
         res.status(500).json({ error: error.message });
     }
 });
 
-// Endpoint de Login de Usuario
+// POST /api/auth/login — Autentica un cliente y devuelve un token JWT
 router.post('/login', async (req, res) => {
     const { dni, password } = req.body;
 
+    // Logs de depuración: útiles durante el desarrollo para verificar qué llega al servidor.
+    // En producción deberían eliminarse para no exponer datos sensibles en los logs.
     console.log('DNI recibido:', dni);
     console.log('Password recibido:', password);
 
     try {
+        // Buscamos al cliente por DNI para obtener su hash y demás datos
         const result = await pool.query('SELECT * FROM clientes WHERE dni = $1', [dni]);
 
         console.log('Resultado query:', result.rows);
-        console.log('password_hash:', result.rows[0]?.password_hash);
+        console.log('password_hash:', result.rows[0]?.password_hash); // ?. evita error si no hay resultado
 
-        // Si no encuentra el DNI, cortamos acá
         if (result.rows.length === 0) {
+            // DNI no encontrado: respondemos con 401 (No autorizado)
+            // Nota: en producción conviene un mensaje genérico como "Credenciales inválidas"
+            // para no revelar si el DNI existe o no en el sistema
             return res.status(401).json({ error: 'Credenciales inválidas (usuario no encontrado)' });
         }
 
@@ -55,23 +65,24 @@ router.post('/login', async (req, res) => {
         console.log('Datos del cliente:', cliente);
         console.log('password_hash:', cliente.password_hash);
 
-        // 2. Comparar la contraseña enviada con la contraseña encriptada (hash) de la BD
+        // bcrypt.compare() hashea la contraseña recibida y la compara con el hash guardado.
+        // No es posible "desencriptar" el hash: la comparación siempre se hace en esta dirección.
         const passwordValida = await bcrypt.compare(password, cliente.password_hash);
 
-        // Si las contraseñas no coinciden, cortamos acá
         if (!passwordValida) {
             return res.status(401).json({ error: 'Credenciales inválidas (contraseña incorrecta)' });
         }
 
-        // 3. Generar el Token JWT
-        // Usamos una clave secreta para firmarlo. 
+        // Credenciales válidas: generamos el token JWT con jwt.sign()
         const token = jwt.sign(
-            { id_cliente: cliente.id_cliente, dni: cliente.dni }, // Payload: los datos que guardamos dentro del token
-            process.env.JWT_SECRET, // Firma secreta
-            { expiresIn: '2h' } // Tiempo de validez del token
+            // Payload: datos que viajan dentro del token y estarán disponibles en req.user
+            // tras pasar por el middleware verificarToken. NO incluir datos sensibles acá.
+            { id_cliente: cliente.id_cliente, dni: cliente.dni },
+            process.env.JWT_SECRET, // Clave secreta para firmar: si cambia, todos los tokens quedan inválidos
+            { expiresIn: '2h' }     // El token expira en 2 horas: el usuario deberá volver a loguearse
         );
 
-        // 4. Devolver el token al usuario
+        // Devolvemos el token al frontend, que lo guardará en localStorage
         res.json({
             mensaje: 'Login exitoso',
             token: token
@@ -82,4 +93,4 @@ router.post('/login', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router; // Exportamos el router para montarlo en app.js con un prefijo

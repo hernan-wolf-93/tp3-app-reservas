@@ -1,28 +1,42 @@
 const express = require('express');
-require('dotenv').config(); // Para leer las variables del archivo .env
+require('dotenv').config(); // Carga el .env antes que cualquier otra cosa para que process.env esté disponible
 
-const app = express();
+const app = express(); // Creamos la instancia principal de la aplicación Express
 
-// Middleware para que Express pueda leer los JSON que enviamos por el body
-app.use(express.json()); 
-app.use(express.static('public'));
+// ============================================================
+// MIDDLEWARES GLOBALES
+// Se ejecutan en orden para TODAS las solicitudes entrantes,
+// antes de llegar a cualquier ruta.
+// ============================================================
 
-// 1. IMPORTAMOS TODAS TUS RUTAS DESDE LA CARPETA 'routes'
+app.use(express.json());        // Parsea el body de las solicitudes JSON (sin esto, req.body sería undefined)
+app.use(express.static('public')); // Sirve los archivos estáticos de la carpeta /public (HTML, CSS, JS del frontend)
+
+// ============================================================
+// RUTAS
+// Cada archivo de rutas maneja un recurso distinto de la API.
+// ============================================================
+
 const authRoutes = require('./routes/auth');
 const reservasRoutes = require('./routes/reservas');
 const habitacionesRoutes = require('./routes/habitaciones');
 const clientesRoutes = require('./routes/clientes');
 
-// 2. LE DECIMOS A EXPRESS QUÉ URL USAR PARA CADA ARCHIVO
-// Rutas públicas (Registro y Login)
+// Ruta pública: no requiere token (acá viven /register y /login)
 app.use('/api/auth', authRoutes);
 
-// Rutas protegidas (El middleware JWT ya está adentro de estos archivos)
+// Rutas protegidas: el middleware verificarToken ya está aplicado dentro de cada archivo de rutas.
+// El prefijo definido acá es el que completa la URL final:
+// ej: '/api/reservas' + '/:id' (definido en el router) = '/api/reservas/:id'
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/habitaciones', habitacionesRoutes);
 app.use('/api/clientes', clientesRoutes);
 
-// 3. INICIAMOS EL SERVIDOR
+// ============================================================
+// INICIO DEL SERVIDOR
+// ============================================================
+
+// Usa el PORT del .env si existe, o 3000 como fallback para desarrollo local
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);

@@ -7,20 +7,22 @@
     <title>Panel de Reservas</title>
 </head>
 <body>
-    <!-- Barra superior -->
     <header class="panel-header">
         <h1>Panel de Reservas</h1>
+        <!-- id="btn-logout" es detectado por app.js para limpiar el token y redirigir al login -->
         <button id="btn-logout">Cerrar Sesión</button>
     </header>
 
-    <!-- Contenedor principal -->
     <main class="panel-container">
         
-        <!-- MITAD IZQUIERDA: Formulario para crear reserva -->
+        <!-- FORMULARIO DE NUEVA RESERVA
+            id="form-reserva" activa el tercer bloque de lógica en app.js.
+            Los ids de los campos (id_habitacion, fecha_inicio, fecha_fin) deben coincidir exactamente con los getElementById() del script -->
         <section class="form-section">
             <h2>Nueva Reserva</h2>
             <form id="form-reserva">
                 <label>Tipo de Habitación:</label>
+                <!-- Los value del select son los id_habitacion reales de la tabla habitaciones en la BD -->
                 <select id="id_habitacion" required>
                     <option value="" disabled selected>Elegí una habitación...</option>
                     <option value="1">Habitación Simple</option>
@@ -35,17 +37,19 @@
             </form>
         </section>
 
-        <!-- MITAD DERECHA: Listado protegido que viene de la BD -->
+        <!-- LISTADO DE RESERVAS
+            id="lista-datos" es el contenedor donde app.js inyecta dinámicamente las tarjetas de reserva obtenidas desde la API.
+            El texto "Cargando datos..." es reemplazado en cuanto llega la respuesta -->
         <section class="list-section">
             <h2>Lista de Reservas</h2>
             <div id="lista-datos">
-                <!-- Aquí aparecerán los datos inyectados por Javascript -->
                 <p>Cargando datos...</p>
             </div>
         </section>
 
     </main>
 
+    <!-- app.js al final del body: cuando se carga, llama automáticamente a cargarDatosProtegidos() que verifica el token y puebla el lista-datos -->
     <script src="app.js"></script>
 </body>
 </html>

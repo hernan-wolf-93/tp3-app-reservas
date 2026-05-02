@@ -1,11 +1,13 @@
-/* RESET */
+/* RESET: evita que el padding y border sumen al ancho total del elemento,
+   haciendo el layout más predecible */
 * {
     box-sizing: border-box;
 }
 
-/* BODY */
+/* BODY: Flexbox en columna para centrar todo el contenido
+   tanto horizontal como verticalmente en la pantalla completa */
 body {
-    position: relative;
+    position: relative; /* Necesario para que el btn-logout pueda posicionarse con absolute */
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
@@ -15,9 +17,8 @@ body {
     align-items: center;
     justify-content: center;
 
-    height: 100vh;
+    height: 100vh; /* Ocupa el 100% de la altura visible de la pantalla */
 
-    /*background: linear-gradient(135deg, #001f5b, #0033a0);*/
     background-image: radial-gradient( circle farthest-corner at 17.6% 50.7%,  rgba(25,0,184,1) 0%, rgba(0,0,0,1) 90% );
     color: white;
 }
@@ -38,7 +39,8 @@ h2 {
     margin-bottom: 10px;
 }
 
-/* FORMULARIOS (todos iguales pero más facheros) */
+/* FORMULARIOS: un solo bloque aplica a todos los formularios del sitio
+   gracias a la lista de selectores separados por coma */
 #form,
 #form-login,
 #form-register,
@@ -51,12 +53,12 @@ h2 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 15px; /* Espaciado uniforme entre los inputs sin usar margin */
 
     box-shadow: 0 15px 30px rgba(0,0,0,0.4);
 }
 
-/* INPUTS */
+/* INPUTS: select incluido para que mantenga el mismo estilo que los inputs de texto */
 input, select {
     width: 200px;
     padding: 8px;
@@ -73,12 +75,12 @@ button {
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.3s; /* Suaviza el efecto hover */
 }
 
 button:hover {
     background: #001f5b;
-    transform: scale(1.05);
+    transform: scale(1.05); /* Agranda levemente el botón al pasar el mouse */
 }
 
 /* LINK REGISTRO */
@@ -97,25 +99,26 @@ button:hover {
     text-decoration: underline;
 }
 
-/* PANEL */
+/* PANEL: Flexbox en fila para dividir la pantalla en dos mitades (form | lista) */
 .panel-container {
     display: flex;
     gap: 40px;
-    align-items: flex-start;
+    align-items: flex-start; /* Alinea ambas mitades desde arriba, no desde el centro */
 }
 
-/* RESERVAS (las tarjetas de la derecha) */
+/* TARJETAS DE RESERVA: selector descendiente que apunta a los divs generados
+   dinámicamente por app.js dentro del último hijo de .panel-container */
 .panel-container > div:last-child > div {
     background: rgba(255, 204, 0, 0.1);
     border: 1px solid #ffcc00;
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 15px;
-
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
-/* BOTON LOGOUT */
+/* BOTON LOGOUT: se saca del flujo normal con position absolute
+   y se ancla a la esquina superior derecha del body (que tiene position relative) */
 #btn-logout {
     background: #ffcc00;
     color: #0033a0;
@@ -135,10 +138,12 @@ button:hover {
     background: #e6b800;
 }
 
+/* LISTA DE RESERVAS: limita la altura y agrega scroll interno para no romper
+   el layout cuando hay muchas reservas cargadas */
 #lista-datos {
-    max-height: 50vh; /* Limita la altura al 50% de la pantalla */
-    overflow-y: auto; /* Hace que aparezca la barra de scroll solo en la lista */
-    padding-right: 15px; /* Da un poco de aire para que la barra no pise el texto */
-    border-top: 2px solid #001C5A; /* Un detalle estético para separar la lista */
+    max-height: 50vh;
+    overflow-y: auto;    /* Scroll vertical solo dentro de este contenedor */
+    padding-right: 15px; /* Evita que la barra de scroll tape el texto */
+    border-top: 2px solid #001C5A;
     padding-top: 10px;
 }

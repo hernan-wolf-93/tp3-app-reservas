@@ -8,8 +8,11 @@
 </head>
 <body>
     <h1>Hotel <br> La Bombonera</h1>
+
     <div id="form">
+        <!-- El id="form-login" es clave: app.js busca este elemento con getElementById para saber que está en la página de login y activar esa lógica -->
         <form id="form-login">
+            <!-- El id de cada input debe coincidir con el document.getElementById() en app.js -->
             <input name="dni" id="dni" class="form-control" type="text" placeholder="Ingrese DNI" required>
             <input name="password" id="password" class="pass-form-control" type="password" placeholder="Ingrese contraseña" required>
             <button type="submit">Iniciar sesión</button>
@@ -17,10 +20,10 @@
     </div>
 
     <div id="register-link">
-        <!-- Cambiamos el link para que vaya a tu futuro archivo HTML de registro -->
         <a href="registro.html">Si no tienes cuenta, pulsar aquí para registrarse</a>
     </div>
 
+    <!-- app.js se carga al final del body para que el DOM ya esté construido cuando el script intente acceder a los elementos (form, inputs, etc.) -->
     <script src="app.js"></script>
 </body>
 </html>
