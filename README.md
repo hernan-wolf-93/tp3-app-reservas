@@ -1,0 +1,27 @@
+- Nombre del proyecto: App de Reservas de Hotel
+
+- Descripcion: este proyecto se trata sobre la creacion de un sistema de clientes de un hotel, usar html, css y js, junto con la creacion del servidor mediante node.js y express, una base de datos con 4 tablas relacionadas, procedimiento almacenado, trigger y una transaccion, usar bcrypt para hashear las contraseñas, y JWT para la autenticación en el login y proteger las rutas y el registro del cliente.
+
+- Instrucciones de Instalación: Clonar o descargar este repositorio en su computadora. Abrir la terminal en la carpeta del proyecto y ejecutar el comando npm install para instalar todas las dependencias necesarias (Express, pg, jsonwebtoken, etc.). Como el archivo con las credenciales está oculto por seguridad, debe crear un archivo llamado .env en la raíz del proyecto. Dentro del .env, configurar las variables de entorno con los datos de su conexión a PostgreSQL local y su clave secreta (puede guiarse con los nombres de variables que dejé en el archivo .env.example). Ejecutar la base de datos usando mi archivo database.sql y luego levantar el servidor.
+Lógica de Base de Datos Implementada:
+Procedimiento Almacenado: crear_reserva se encarga de verificar que las fechas solicitadas no se superpongan con otra reserva confirmada antes de insertar los datos.
+Trigger: trigger_actualizar_habitacion se dispara automáticamente cuando una reserva cambia a estado 'cancelada' o 'finalizada', actualizando la habitación nuevamente a estado 'disponible'.
+Transacción: Se implementó en Node.js usando BEGIN, COMMIT y ROLLBACK para asegurar que si falla la creación de la reserva en la base de datos, no se guarde información incompleta.
+
+1. Con tus palabras, explica que es un servidor web y cómo funciona el ciclo request response. 
+- Un servidor web es un ordenador que se encarga de responder a las solicitudes de una pagina web. El ciclo request response funciona de la siguiente manera: la pagina web realiza una peticion al servidor, esta peticion puede ser para recibir un dato, ingresar un dato, modificar un dato o eliminar un dato. El servidor recibe la peticion, la analiza, en caso de haber un error lo demuestra mediante un msj dependiendo el tipo de error, y si esta todo bien responde con la peticion y el acceso a los datos lo que se termina viendo expresado en la pagina web.
+
+2. ¿Qué es Express y por qué lo usamos en lugar de usar solo Node.js? 
+- Express es un framework de Node.js que facilita crear aplicaciones web y APIs. Con solo Node.js hay que manejar todo manualmente, como rutas y solicitudes HTTP. Eso hace que el código sea más largo y difícil de mantener. Express simplifica esto con funciones como `app.get` y `app.post`. También permite usar middlewares para organizar mejor la lógica. En resumen, Express hace el desarrollo más rápido, limpio y escalable.
+
+3. ¿Qué es un JWT y como se diferencia de guardar la sesión en el servidor? 
+- JWT (JSON Web Token) es un token que se usa para autenticar usuarios, o sea una clave encriptada en la que se convierte la contraseña de cada usuario que contiene informacion codificada y esta firmado. Se envía al cliente y este lo guarda (por ejemplo en localStorage). En cada petición, el cliente manda el token y el servidor lo verifica, no hace falta guardar nada en el servidor: es un sistema “stateless”. En cambio, con sesiones tradicionales el servidor guarda los datos del usuario. El cliente solo envía un ID de sesión y el servidor busca esa info guardada. En resumen, JWT no guarda estado en el servidor, las sesiones sí.
+
+4. ¿Qué ventaja tiene usar un procedimiento almacenado en lugar de escribir ese SQL desde Node.js? 
+- Un procedimiento almacenado es código SQL que se guarda y ejecuta dentro de la base de datos. La principal ventaja es el rendimiento, porque se ejecuta directamente en el servidor de la BD. También reduce el tráfico, ya que enviás una llamada en lugar de varias consultas. Mejora la seguridad, porque podés controlar el acceso sin exponer las tablas directamente. Permite reutilizar lógica sin repetir SQL en el código de Node.js. Hace que el código de la aplicación sea más limpio y organizado. Además, es más fácil de mantener si cambia la lógica en la base de datos. En resumen, centraliza lógica, mejora rendimiento y da más control.
+
+5. ¿Por qué es importante usar transacciones? Pone un ejemplo de cuando un ROLLBACK salva la integridad de los datos. 
+- Las transacciones permiten agrupar varias operaciones en una sola unidad lógica. Garantizan que todo se ejecute correctamente o que no se aplique nada. Esto mantiene la integridad y consistencia de los datos. Si ocurre un error, se puede usar ROLLBACK para deshacer los cambios. Ejemplo: una transferencia bancaria entre cuentas. Se descuenta dinero de una cuenta y se acredita en otra. Si falla el segundo paso, ROLLBACK revierte el descuento inicial. Así se evita que el dinero “desaparezca” y los datos queden inconsistentes.
+
+6. ¿Qué es un trigger? Describe el trigger que implementaste y en qué momento se dispara. 
+- Un trigger es una acción que la base de datos ejecuta automáticamente cuando ocurre un evento específico (como un INSERT o UPDATE) en una tabla, sin necesidad de llamarlo manualmente. En mi proyecto implementé el trigger_actualizar_habitacion, el cual se dispara automáticamente cuando se hace un UPDATE en la tabla reservas. Específicamente, si detecta que una reserva pasó a estar "cancelada" o "finalizada", automáticamente cambia el estado de esa habitación a "disponible".
