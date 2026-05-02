@@ -12,8 +12,9 @@ const obtenerReservas = async (req, res) => {
                 c.nombre, c.apellido, h.tipo, h.estado AS estado_habitacion 
             FROM reservas r
             JOIN clientes c ON r.id_cliente = c.id_cliente
-            JOIN habitaciones h ON r.id_habitacion = h.id_habitacion
-            WHERE r.id_cliente = $1`, // <-- ESTA ES LA REGLA DE SEGURIDAD
+            JOIN habitaciones h ON r.id_habitacion = h.id_habitacion 
+            WHERE r.id_cliente = $1
+            ORDER BY r.id_reserva DESC`, // <-- ESTA ES LA REGLA DE SEGURIDAD
             [id_cliente_logueado]
         );
         res.json(result.rows);

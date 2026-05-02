@@ -80,6 +80,17 @@ if (btnLogout) {
     });
 }
 
+function cambiarFormatoFecha(fechaDesdeBD) {
+    // 1. Separamos la fecha de la hora (nos quedamos con "2026-06-22")
+    const soloFecha = fechaDesdeBD.split('T')[0]; 
+    
+    // 2. Cortamos el texto por los guiones para separar Año, Mes y Día
+    const partes = soloFecha.split('-'); // Esto crea un arreglo: ["2026", "06", "22"]
+    
+    // 3. Lo armamos al revés: Día - Mes - Año
+    return `${partes[2]}-${partes[1]}-${partes[0]}`; 
+}
+
 // 2. OBTENER Y MOSTRAR DATOS (Requiere Token)
 async function cargarDatosProtegidos() {
     const listaDatos = document.getElementById('lista-datos');
@@ -110,28 +121,51 @@ async function cargarDatosProtegidos() {
             listaDatos.innerHTML = ''; 
 
         data.forEach(item => {
-            const div = document.createElement('div');
+    const div = document.createElement('div');
     
-        // Armamos una variable para el botón dependiendo del estado
-            let botonAccion = '';
-        if (item.estado === 'confirmada') {
-            botonAccion = `<button onclick="cancelarReserva(${item.id_reserva})" style="margin-top: 10px; color: red; cursor: pointer;">Cancelar Reserva</button>`;
-        } else {
-            botonAccion = `<button disabled style="margin-top: 10px; color: gray; cursor: not-allowed;">Reserva ${item.estado}</button>`;
-        }
+    // Capturamos las fechas para compararlas
+    const fechaActual = new Date();
+    // Le restamos horas a la fecha actual para que la comparación de días sea exacta
+    fechaActual.setHours(0,0,0,0); 
+    const fechaInicio = new Date(item.fecha_inicio);
 
-        div.innerHTML = `
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
-                <strong>Reserva #${item.id_reserva}</strong><br>
-                Cliente: ${item.nombre} ${item.apellido}<br>
-                Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
-                Fechas: ${item.fecha_inicio.split('T')[0]} al ${item.fecha_fin.split('T')[0]}<br>
-                Estado de reserva: <strong>${item.estado}</strong><br>
-            
-                <!-- Inyectamos el botón que armamos arriba -->
-                ${botonAccion}
-            </div>
+    let botonesHTML = '';
+
+    if (item.estado === 'confirmada') {
+        // Comparamos si estamos antes de la fecha de inicio
+        if (fechaActual < fechaInicio) {
+            // Aún no llegó el día: Puede cancelar, NO puede hacer checkout
+            botonesHTML = `
+                <button onclick="cambiarEstadoReserva(${item.id_reserva}, 'cancelada')" style="background-color: red; color: white;">Cancelar Reserva</button>
+                <button disabled style="background-color: gray; color: white; cursor: not-allowed;">Checkout (Aún no ingresa)</button>
+            `;
+        } else {
+            // Ya es el día de la reserva o posterior: Puede hacer checkout, NO cancelar
+            botonesHTML = `
+                <button disabled style="background-color: gray; color: white; cursor: not-allowed;">Cancelar Reserva (Ya inició)</button>
+                <button onclick="cambiarEstadoReserva(${item.id_reserva}, 'finalizada')" style="background-color: green; color: white;">Realizar Checkout</button>
+            `;
+        }
+    } else {
+        // Si ya está cancelada o finalizada, ambos botones quedan grises
+        botonesHTML = `
+            <button disabled style="background-color: gray; color: white; cursor: not-allowed;">Reserva ${item.estado}</button>
         `;
+    }
+
+    div.innerHTML = `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <strong>Reserva #${item.id_reserva}</strong><br>
+            Cliente: ${item.nombre} ${item.apellido}<br>
+            Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
+            Fechas: ${cambiarFormatoFecha(item.fecha_inicio)} al ${cambiarFormatoFecha(item.fecha_fin)}<br>
+            Estado de reserva: <strong>${item.estado}</strong><br>
+            
+            <div style="margin-top: 15px;">
+                ${botonesHTML}
+            </div>
+        </div>
+    `;
     listaDatos.appendChild(div);
 });
         } else {
@@ -180,23 +214,22 @@ if (formReserva) {
     });
 }
 
-async function cancelarReserva(id_reserva) {
+async function cambiarEstadoReserva(id_reserva, nuevoEstado) {
     const token = localStorage.getItem('token');
     
-    // Hacemos una petición PUT a tu endpoint de actualización
     const response = await fetch(`/api/reservas/${id_reserva}`, {
         method: 'PUT',
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ estado: 'cancelada' }) // Le pasamos el nuevo estado
+        body: JSON.stringify({ estado: nuevoEstado }) // Enviará 'cancelada' o 'finalizada'
     });
 
     if (response.ok) {
-        alert('Reserva cancelada.');
-        cargarDatosProtegidos(); // Volvemos a cargar la lista para ver los cambios
+        alert(`La reserva ha sido ${nuevoEstado} exitosamente.`);
+        cargarDatosProtegidos(); // Recarga la lista
     } else {
-        alert('Hubo un error al cancelar.');
+        alert('Hubo un error al actualizar la reserva.');
     }
 }

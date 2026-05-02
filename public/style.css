@@ -134,3 +134,11 @@ button:hover {
 #btn-logout:hover {
     background: #e6b800;
 }
+
+#lista-datos {
+    max-height: 50vh; /* Limita la altura al 50% de la pantalla */
+    overflow-y: auto; /* Hace que aparezca la barra de scroll solo en la lista */
+    padding-right: 15px; /* Da un poco de aire para que la barra no pise el texto */
+    border-top: 2px solid #001C5A; /* Un detalle estético para separar la lista */
+    padding-top: 10px;
+}
