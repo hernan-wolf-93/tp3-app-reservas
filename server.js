@@ -21,6 +21,7 @@ const authRoutes = require('./routes/auth');
 const reservasRoutes = require('./routes/reservas');
 const habitacionesRoutes = require('./routes/habitaciones');
 const clientesRoutes = require('./routes/clientes');
+const pagosRoutes = require('./routes/pagos');
 
 // Ruta pública: no requiere token (acá viven /register y /login)
 app.use('/api/auth', authRoutes);
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/habitaciones', habitacionesRoutes);
 app.use('/api/clientes', clientesRoutes);
+app.use('/api/pagos', pagosRoutes);
 
 // ============================================================
 // INICIO DEL SERVIDOR

@@ -62,8 +62,6 @@ router.post('/login', async (req, res) => {
         }
 
         const cliente = result.rows[0];
-        console.log('Datos del cliente:', cliente);
-        console.log('password_hash:', cliente.password_hash);
 
         // bcrypt.compare() hashea la contraseña recibida y la compara con el hash guardado.
         // No es posible "desencriptar" el hash: la comparación siempre se hace en esta dirección.

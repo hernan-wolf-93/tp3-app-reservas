@@ -155,7 +155,7 @@ async function cargarDatosProtegidos() {
                     <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
                         <strong>Reserva #${item.id_reserva}</strong><br>
                         Cliente: ${item.nombre} ${item.apellido}<br>
-                        Habitación: ${item.tipo} (Estado actual: ${item.estado_habitacion})<br>
+                        Habitación: ${item.tipo}<br>
                         Fechas: ${cambiarFormatoFecha(item.fecha_inicio)} al ${cambiarFormatoFecha(item.fecha_fin)}<br>
                         Estado de reserva: <strong>${item.estado}</strong><br>
                         <div style="margin-top: 15px;">

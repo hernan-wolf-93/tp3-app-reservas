@@ -128,6 +128,7 @@ EXECUTE FUNCTION actualizar_estado_habitacion();
 -- ADVERTENCIA: las contraseñas están en texto plano solo para
 -- pruebas directas en la BD. El sistema real siempre registra
 -- clientes a través de /api/auth/register que aplica bcrypt.
+-- O sea: registrar nuevos usuarios desde la web para probar el login con bcrypt.
 -- ============================================================
 INSERT INTO clientes (nombre, apellido, dni, password_hash)
 VALUES ('Juan', 'Perez', '12345678', 'techo1');
