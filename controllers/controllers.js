@@ -158,7 +158,7 @@ const obtenerClientes = async (req, res) => {
 const obtenerClientePorId = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await pool.query('SELECT * FROM clientes WHERE id_cliente = $1', [id]);
+        const result = await pool.query('SELECT id_cliente, nombre, apellido, dni FROM clientes WHERE id_cliente = $1', [id]);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
